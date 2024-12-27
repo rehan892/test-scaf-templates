@@ -1,0 +1,63 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: {{ project_dash }}-prod
+
+resources:
+  - ../sandbox
+  - secrets.yaml
+
+patches:
+- target:
+    kind: SealedSecret
+    name: secrets-config
+  path: secrets.yaml
+- patch: |-
+    - op: replace
+      path: /spec/issuerRef/name
+      value: letsencrypt-prod
+    - op: replace
+      path: /spec/dnsNames
+      value:
+        - api.{{ domain_name }}
+        - k8s.{{ domain_name }}
+  target:
+    kind: Certificate
+    name: cluster-cert
+- patch: |-
+    - op: replace
+      path: /metadata/annotations/cert-manager.io~1cluster-issuer
+      value: letsencrypt-prod
+    - op: replace
+      path: /spec/routes/0/match
+      value: Host(`api.{{ domain_name }}`)
+  target:
+    kind: IngressRoute
+    name: backend-ingress
+- patch: |-
+    - op: replace
+      path: /metadata/annotations/cert-manager.io~1cluster-issuer
+      value: letsencrypt-prod
+    - op: replace
+      path: /spec/routes/0/match
+      value: Host(`k8s.{{ domain_name }}`)
+  target:
+    kind: IngressRoute
+    name: k8s-ingress
+
+configMapGenerator:
+  - name: app-config
+    behavior: merge
+    literals:
+     - ENVIRONMENT="production"
+     - DJANGO_SETTINGS_MODULE="config.settings.production"
+     - DJANGO_CSRF_TRUSTED_ORIGINS="https://{{ domain_name }}"
+     - AWS_S3_CUSTOM_DOMAIN="{{ domain_name }}"
+
+images:
+  - name: {{ aws_account_id }}.dkr.ecr.{{ aws_region }}.amazonaws.com/{{ project_dash }}-sandbox-backend
+    newName: {{ aws_account_id }}.dkr.ecr.{{ aws_region }}.amazonaws.com/{{ project_dash }}-backend
+    newTag: latest
+{% if create_nextjs_frontend %}
+  - name: {{ aws_account_id }}.dkr.ecr.{{ aws_region }}.amazonaws.com/{{ project_dash }}-sandbox-frontend
+    newName: {{ aws_account_id }}.dkr.ecr.{{ aws_region }}.amazonaws.com/{{ project_dash }}-frontend
+    newTag: latest{% endif %}

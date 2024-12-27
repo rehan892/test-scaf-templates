@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flower
+  labels:
+    app: {{ project_slug }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ project_slug }}
+  template:
+    metadata:
+      labels:
+        app: {{ project_slug }}
+    spec:
+      containers:
+        - name: flower
+          image: {{ project_slug }}_local_django:latest
+          command: ["celery", "-A", "{{ project_slug }}", "flower"]
+          envFrom:
+            - configMapRef:
+                name: django-config
+      initContainers:
+        - name: celery-check-workers-ready
+          image: {{ project_slug }}_local_django:latest
+          command:
+            ['sh', '-c', 'until celery -A {{ project_slug }} inspect ping; do echo Waiting for Celery workers to be ready; sleep 5; done']
+          envFrom:
+            - configMapRef:
+                name: django-config
