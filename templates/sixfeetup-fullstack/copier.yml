@@ -92,7 +92,7 @@ mail_service:
 
 challenge:
   type: bool
-  default: "{{ is_challange_mode }}"
+  default: "{{ is_challenge_mode }}"
   help: "Do you want to enable the challenge feature? (y/n) [default: false]"
   when: false
 
