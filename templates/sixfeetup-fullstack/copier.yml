@@ -1,0 +1,137 @@
+# Copier configuration for "SFU fullstack project template"
+_templates_suffix: ""
+
+_tasks:
+  - command: python hooks/post_gen_project.py
+    working_directory: "{{ project_slug }}"
+  - command: rm -rf hooks
+    working_directory: "{{ project_slug }}"
+
+project_name:
+  type: str
+  default: "My Awesome Scaf Project"
+  help: "The name of your project."
+
+project_slug:
+  type: str
+  default: "{{ project_name.lower().replace(' ', '_').replace('-', '_').replace('.', '_').strip() }}"
+  help: "The project slug derived from the project name."
+  validator: >-
+    {% if not project_slug.isidentifier() %}
+      "'{{ project_slug }}' is not a valid Python identifier."
+    {% elif project_slug != project_slug.lower() %}
+      "'{{ project_slug }}' must be all lowercase."
+    {% endif %}
+
+project_dash:
+  type: str
+  default: "{{ project_name.lower().replace(' ', '-').replace('_', '-').replace('.', '-').strip() }}"
+  help: "The project name in dash-separated format."
+
+description:
+  type: str
+  default: "Behold My Awesome Project!"
+  help: "A brief description of your project."
+
+author_name:
+  type: str
+  default: "Joe Scaf"
+  help: "The name of the author."
+  validator: >-
+    {% if "\\" in author_name %}
+      "Backslashes ('\\') are not allowed in the author name."
+    {% elif not author_name.strip() %}
+      "Author name cannot be empty."
+    {% elif not author_name.replace(" ", "").isalpha() %}
+     "'{{ author_name }}' should contain only alphabetic characters and spaces."
+    {% endif %}
+
+domain_name:
+  type: str
+  default: "sixfeetup.com"
+  help: "The domain name associated with the project."
+
+email:
+  type: str
+  default: "{{ author_name.lower().replace(' ', '-') }}@{{ domain_name }}"
+  help: "The author's email address."
+
+version:
+  type: str
+  default: "0.1.0"
+  help: "The initial version of the project."
+
+timezone:
+  type: str
+  default: "US/Eastern"
+  help: "The default timezone for the project."
+
+aws_region:
+  type: str
+  default: "us-east-1"
+  help: "AWS region for deployment."
+
+aws_account_id:
+  type: str
+  default: "000000000000"
+  help: "AWS account ID for deployment."
+
+create_nextjs_frontend:
+  type: bool
+  default: true
+  help: "Do you want to create a Next.js frontend? (y/n) [default: true]"
+
+mail_service:
+  type: str
+  default: "Mailgun"
+  choices:
+    - "Mailgun"
+    - "Amazon SES"
+    - "Other SMTP"
+  help: "Which mail service do you want to use?"
+
+challenge:
+  type: bool
+  default: "{{ is_challenge_mode }}"
+  help: "Do you want to enable the challenge feature? (y/n) [default: false]"
+  when: false
+
+use_celery:
+  type: bool
+  default: false
+  help: "Do you want to use Celery for task management? (y/n) [default: false]"
+
+use_sentry:
+  type: bool
+  default: false
+  help: "Do you want to integrate Sentry for error tracking? (y/n) [default: false]"
+
+debug:
+  type: bool
+  default: false
+  help: "Do you want to enable debug mode? (y/n) [default: false]"
+
+source_control_provider:
+  type: str
+  default: "github.com"
+  choices:
+    github: "github.com"
+    bitbucket: "bitbucket.org"
+    No source control provider: "None"
+  help: "Which source control provider do you want to use? [default: github]"
+
+source_control_organization_slug:
+  type: str
+  default: "sixfeetup"
+  help: "What is the organization slug for the source control provider?"
+
+repo_name:
+  type: str
+  default: "{{ project_slug }}"
+  help: "The name of the repository."
+
+repo_url:
+  type: str
+  default: "git@{{ source_control_provider }}:{{ source_control_organization_slug }}/{{ project_slug }}.git"
+  help: "The URL of the repository."
+
